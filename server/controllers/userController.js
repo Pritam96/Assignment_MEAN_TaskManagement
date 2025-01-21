@@ -34,6 +34,16 @@ const loginUser = async (req, res, next) => {
   }
 };
 
+const logoutUser = async (req, res, next) => {
+  res
+    .status(200)
+    .cookie("accessToken", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    })
+    .json({ message: "Logged out successfully" });
+};
+
 const generateTokenResponse = async (res, user) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
@@ -55,4 +65,4 @@ const generateTokenResponse = async (res, user) => {
   });
 };
 
-export { registerUser, loginUser };
+export { registerUser, loginUser, logoutUser };
