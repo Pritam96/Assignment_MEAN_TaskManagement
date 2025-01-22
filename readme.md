@@ -2,7 +2,7 @@
 
 ## Overview
 
-A simple task management system with user authentication, task creation, and management features. This project uses AngularJS for the frontend and a secure backend to manage user and task-related operations via RESTful APIs.
+A simple task management system with user authentication, task creation, and management features. This project uses ReactJS for the frontend and a secure backend to manage user and task-related operations via RESTful APIs.
 
 ---
 
@@ -46,7 +46,7 @@ Logged-in users can perform the following actions:
   - User management (register, login, etc.)
   - Task management (CRUD operations).
 
-### 5. **Frontend (AngularJS)**
+### 5. **Frontend (ReactJS)**
 
 - **Login/Register Page**:  
   For user authentication.
@@ -76,7 +76,7 @@ Logged-in users can perform the following actions:
 
 ### Frontend:
 
-- AngularJS
+- ReactJS
 
 ---
 
@@ -84,6 +84,17 @@ Logged-in users can perform the following actions:
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/Pritam96/Assignment_MEAN_TaskManagement.git
+   cd Assignment_MEAN_TaskManagement
+   ```
+2. Set up the server:
+   ```bash
+    cd server
+    npm install
+    cd ..
+   ```
+3. Set up the client:
+   ```bash
+    cd client
+    npm install
    ```
