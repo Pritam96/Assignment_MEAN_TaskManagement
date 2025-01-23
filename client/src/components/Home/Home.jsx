@@ -18,6 +18,7 @@ import { NativeSelectField, NativeSelectRoot } from "../ui/native-select";
 import { useAuth } from "../../context/AuthProvider";
 import { useTasks } from "../../context/TasksProvider";
 import { toaster } from "../ui/toaster";
+import moment from "moment";
 
 const Home = () => {
   const { user, logoutAction } = useAuth();
@@ -204,7 +205,7 @@ const Home = () => {
                       }
                     >
                       <option value="pending">Pending</option>
-                      <option value="running">Running</option>
+                      <option value="running">In Progress</option>
                       <option value="completed">Completed</option>
                     </NativeSelectField>
                   </NativeSelectRoot>
@@ -263,11 +264,11 @@ const Home = () => {
                   </Text>
                   {user?.isAdmin && (
                     <Text fontSize="sm" color="gray.600">
-                      Created By: {tsk.createdBy}
+                      Created By: {tsk.createdBy.name} ({tsk.createdBy._id})
                     </Text>
                   )}
                   <Text fontSize="sm" color="gray.600">
-                    Due Date: {tsk.dueDate}
+                    Due Date: {moment(tsk.dueDate).fromNow()}
                   </Text>
                   <HStack mt={4} spacing={4}>
                     <Button

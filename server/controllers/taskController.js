@@ -47,8 +47,7 @@ const createTask = async (req, res, next) => {
 const getTasks = async (req, res, next) => {
   try {
     const query = req.user.isAdmin ? {} : { createdBy: req.user._id };
-    const tasks = await Task.find(query);
-
+    const tasks = await Task.find(query).populate("createdBy", "name");
     res.status(200).json(tasks);
   } catch (error) {
     console.error("Error in fetching tasks:", error.message);
@@ -93,11 +92,9 @@ const updateTask = async (req, res, next) => {
     }
 
     if (!title || !description || !dueDate || !status) {
-      return res
-        .status(400)
-        .json({
-          message: "Title, description,due date and status are required",
-        });
+      return res.status(400).json({
+        message: "Title, description,due date and status are required",
+      });
     }
 
     const parsedDate = new Date(dueDate);
