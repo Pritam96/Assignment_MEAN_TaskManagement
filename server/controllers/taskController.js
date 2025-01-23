@@ -45,9 +45,23 @@ const createTask = async (req, res, next) => {
 };
 
 const getTasks = async (req, res, next) => {
+  const { sortField, sortOrder = "asc" } = req.query;
+
   try {
+    if (sortField && !["dueDate", "status"].includes(sortField)) {
+      return res.status(400).json({ message: "Invalid sort field" });
+    }
+
     const query = req.user.isAdmin ? {} : { createdBy: req.user._id };
-    const tasks = await Task.find(query).populate("createdBy", "name");
+
+    const sortOptions = sortField
+      ? { [sortField]: sortOrder === "desc" ? -1 : 1 }
+      : {};
+
+    const tasks = await Task.find(query)
+      .populate("createdBy", "name")
+      .sort(sortOptions);
+
     res.status(200).json(tasks);
   } catch (error) {
     console.error("Error in fetching tasks:", error.message);

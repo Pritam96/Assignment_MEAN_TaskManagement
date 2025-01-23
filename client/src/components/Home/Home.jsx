@@ -33,23 +33,25 @@ const Home = () => {
   });
 
   const [currentId, setCurrentId] = useState(null);
+  const [sortBy, setSortBy] = useState("status");
+
+  const loadTasks = async (sortOption) => {
+    try {
+      await fetchTasks(user.accessToken, sortOption);
+    } catch (error) {
+      toaster.create({
+        title: "Error loading tasks.",
+        description: error.message || "An unexpected error occurred.",
+        type: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        await fetchTasks(user.accessToken);
-      } catch (error) {
-        toaster.create({
-          title: "Error loading tasks.",
-          description: error,
-          type: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    };
-    loadTasks();
-  }, []);
+    loadTasks(sortBy);
+  }, [sortBy]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -136,7 +138,7 @@ const Home = () => {
     } catch (error) {
       toaster.create({
         title: "Error deleting task.",
-        description: error,
+        description: error.message || "An unexpected error occurred.",
         type: "error",
         duration: 5000,
         isClosable: true,
@@ -164,12 +166,7 @@ const Home = () => {
         </HStack>
       </HStack>
 
-      <Grid
-        templateColumns={{ base: "1fr", md: "1fr 2fr" }}
-        gap={6}
-        flex="1"
-        overflowY="auto"
-      >
+      <Grid templateColumns={{ base: "1fr", md: "1fr 2fr" }} gap={6} flex="1">
         <Box p={4} borderWidth={1} borderRadius="md" shadow="sm">
           <Heading as="h2" size="lg" mb="4" textAlign="center">
             Create New Task
@@ -231,11 +228,28 @@ const Home = () => {
         </Box>
 
         <Box p={4} borderWidth={1} borderRadius="md" shadow="sm">
-          <Heading as="h2" size="lg" mb="6" textAlign="center">
-            Task List
-          </Heading>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            pb={4}
+          >
+            <Heading as="h2" size="lg" mb="4">
+              Task List
+            </Heading>
 
-          <Box flex="1" overflowY="auto">
+            <NativeSelectRoot variant="filled" width="200px">
+              <NativeSelectField
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                placeholder="Sort by..."
+              >
+                <option value="status">Status</option>
+                <option value="dueDate">Due Date</option>
+              </NativeSelectField>
+            </NativeSelectRoot>
+          </Box>
+          <Box overflowY="auto" maxH="75vh">
             {tasks.length > 0 ? (
               tasks.map((tsk) => (
                 <Box
@@ -264,7 +278,7 @@ const Home = () => {
                   </Text>
                   {user?.isAdmin && (
                     <Text fontSize="sm" color="gray.600">
-                      Created By: {tsk.createdBy.name} ({tsk.createdBy._id})
+                      Created By: {tsk.createdBy.name}
                     </Text>
                   )}
                   <Text fontSize="sm" color="gray.600">

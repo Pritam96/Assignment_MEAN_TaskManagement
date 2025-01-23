@@ -9,7 +9,7 @@ const TasksProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Fetch all tasks
-  const fetchTasks = async (token) => {
+  const fetchTasks = async (token, sortOption) => {
     const config = {
       headers: {
         "Content-type": "application/json",
@@ -19,7 +19,10 @@ const TasksProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get("/api/tasks", config);
+      const { data } = await axios.get(
+        `/api/tasks?sortField=${sortOption}`,
+        config
+      );
       setTasks(data);
     } catch (err) {
       setError(err.message || "Failed to fetch tasks.");
