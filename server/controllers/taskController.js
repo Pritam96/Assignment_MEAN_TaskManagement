@@ -8,7 +8,7 @@ const checkOwnershipOrAdmin = (task, user) => {
 };
 
 const createTask = async (req, res, next) => {
-  const { title, description, dueDate } = req.body;
+  const { title, description, dueDate, status } = req.body;
 
   try {
     if (!title || !description || !dueDate) {
@@ -33,13 +33,11 @@ const createTask = async (req, res, next) => {
       title,
       description,
       dueDate: parsedDate,
+      status,
       createdBy: req.user._id,
     });
 
-    res.status(201).json({
-      message: "Task created successfully",
-      task,
-    });
+    res.status(201).json(task);
   } catch (error) {
     console.error("Error in creating task:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -87,17 +85,19 @@ const getTask = async (req, res, next) => {
 
 const updateTask = async (req, res, next) => {
   const { id: _id } = req.params;
-  const { title, description, dueDate } = req.body;
+  const { title, description, dueDate, status } = req.body;
 
   try {
     if (!validateObjectId(_id)) {
       return res.status(404).json({ message: `No task with id: ${_id}` });
     }
 
-    if (!title || !description || !dueDate) {
+    if (!title || !description || !dueDate || !status) {
       return res
         .status(400)
-        .json({ message: "Title, description, and due date are required" });
+        .json({
+          message: "Title, description,due date and status are required",
+        });
     }
 
     const parsedDate = new Date(dueDate);
@@ -127,13 +127,11 @@ const updateTask = async (req, res, next) => {
     task.title = title;
     task.description = description;
     task.dueDate = parsedDate;
+    task.status = status;
 
     await task.save();
 
-    res.status(200).json({
-      message: "Task updated successfully",
-      task,
-    });
+    res.status(200).json(task);
   } catch (error) {
     console.error("Error in updating task:", error.message);
     res.status(500).json({ message: "Internal server error" });

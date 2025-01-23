@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { Container } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import Home from "./components/Home/Home";
 import Auth from "./components/Auth/Auth";
 import { useAuth } from "./context/AuthProvider";
@@ -10,7 +10,7 @@ function App() {
   const { user } = useAuth();
 
   return (
-    <Container maxW="xl">
+    <Box width="100vw" height="100vh" overflow="hidden">
       <Toaster />
       <Routes>
         <Route
@@ -23,7 +23,7 @@ function App() {
         />
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
-    </Container>
+    </Box>
   );
 }
 

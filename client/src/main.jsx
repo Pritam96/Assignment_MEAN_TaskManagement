@@ -5,13 +5,16 @@ import "./index.css";
 import App from "./App.jsx";
 import AuthProvider from "./context/AuthProvider";
 import { BrowserRouter } from "react-router-dom";
+import TasksProvider from "./context/TasksProvider";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ChakraProvider>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <TasksProvider>
+            <App />
+          </TasksProvider>
         </AuthProvider>
       </BrowserRouter>
     </ChakraProvider>

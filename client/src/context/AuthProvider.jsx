@@ -10,6 +10,7 @@ const AuthProvider = ({ children }) => {
   );
   const navigate = useNavigate();
 
+  // Login existing user
   const loginAction = async (formData) => {
     try {
       const { data } = await axios.post("/api/users/login", formData);
@@ -23,6 +24,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register a new user
   const registerAction = async (formData) => {
     try {
       const { data } = await axios.post("/api/users/register", formData);
@@ -36,6 +38,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout a user
   const logoutAction = async () => {
     try {
       await axios.post("/api/users/logout");

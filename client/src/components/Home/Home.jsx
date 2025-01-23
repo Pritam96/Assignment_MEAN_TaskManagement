@@ -4,38 +4,25 @@ import {
   Heading,
   HStack,
   Text,
-  VStack,
   Badge,
   Stack,
   Fieldset,
   Input,
   Textarea,
+  Grid,
+  Flex,
 } from "@chakra-ui/react";
 import { Field } from "../ui/field";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NativeSelectField, NativeSelectRoot } from "../ui/native-select";
 import { useAuth } from "../../context/AuthProvider";
+import { useTasks } from "../../context/TasksProvider";
+import { toaster } from "../ui/toaster";
 
 const Home = () => {
   const { user, logoutAction } = useAuth();
-  const [tasks, setTasks] = useState([
-    {
-      id: 101,
-      title: "Task 1",
-      description: "This is a sample task",
-      dueDate: new Date("2022-01-31"),
-      status: "pending",
-      createdBy: "User1",
-    },
-    {
-      id: 102,
-      title: "Task 2",
-      description: "This is a sample task",
-      dueDate: new Date("2022-01-30"),
-      status: "completed",
-      createdBy: "User1",
-    },
-  ]);
+  const { tasks, fetchTasks, loading, createTask, updateTask, deleteTask } =
+    useTasks();
 
   const [newTask, setNewTask] = useState({
     title: "",
@@ -44,37 +31,116 @@ const Home = () => {
     status: "pending",
   });
 
-  console.log(newTask);
+  const [currentId, setCurrentId] = useState(null);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        await fetchTasks(user.accessToken);
+      } catch (error) {
+        toaster.create({
+          title: "Error loading tasks.",
+          description: error,
+          type: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+    loadTasks();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTask((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.title || !newTask.description || !newTask.dueDate) {
-      alert("Please fill in all fields before adding a task.");
+      toaster.create({
+        title: "Validation error.",
+        description: "Please fill in all fields before saving the task.",
+        type: "warning",
+        duration: 4000,
+        isClosable: true,
+      });
       return;
     }
 
-    setTasks((prevTasks) => [
-      ...prevTasks,
-      {
-        id: Date.now(),
-        ...newTask,
-        dueDate: new Date(newTask.dueDate),
-      },
-    ]);
+    try {
+      if (currentId) {
+        // Update Task
+        await updateTask(currentId, newTask, user.accessToken);
+        toaster.create({
+          title: "Task updated.",
+          description: "Your task has been successfully updated.",
+          type: "success",
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
+        // Create Task
+        await createTask(newTask, user.accessToken);
+        toaster.create({
+          title: "Task created.",
+          description: "Your task has been successfully created.",
+          type: "success",
+          duration: 4000,
+          isClosable: true,
+        });
+      }
 
-    setNewTask({ title: "", description: "", dueDate: "", status: "pending" });
+      // Reset form and ID
+      setNewTask({
+        title: "",
+        description: "",
+        dueDate: "",
+        status: "pending",
+      });
+      setCurrentId(null);
+    } catch (error) {
+      toaster.create({
+        title: `Error ${currentId ? "updating" : "creating"} task.`,
+        description: error.message || "An unexpected error occurred.",
+        type: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleEdit = (id) => {
-    console.log(`Edit task with ID: ${id}`);
+    const task = tasks.find((t) => t._id === id);
+    if (task) {
+      setNewTask({
+        title: task.title,
+        description: task.description,
+        dueDate: new Date(task.dueDate).toISOString().split("T")[0],
+        status: task.status,
+      });
+      setCurrentId(id);
+    }
   };
 
-  const handleDelete = (id) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteTask(id, user.accessToken);
+      toaster.create({
+        title: "Task deleted.",
+        description: "The task has been successfully deleted.",
+        type: "success",
+        duration: 4000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toaster.create({
+        title: "Error deleting task.",
+        description: error,
+        type: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -82,7 +148,7 @@ const Home = () => {
   };
 
   return (
-    <Box maxW="xl" mx="auto" mt="8">
+    <Flex direction="column" height="100vh" width="100vw" p={4}>
       <HStack justify="space-between" mb="6">
         <Heading as="h1" size="2xl">
           Task Management System
@@ -97,125 +163,139 @@ const Home = () => {
         </HStack>
       </HStack>
 
-      <Box p={4} borderWidth={1} borderRadius="md" shadow="sm" mb={6}>
-        <Heading as="h2" size="lg" mb="4" textAlign="center">
-          Create New Task
-        </Heading>
-        <Stack spacing={4}>
-          <Fieldset.Root size="lg">
-            <Fieldset.Legend>Task Details</Fieldset.Legend>
-            <Fieldset.Content>
-              <Field label="Title">
-                <Input
-                  name="title"
-                  value={newTask.title}
-                  onChange={handleInputChange}
-                  placeholder="Enter task title"
-                />
-              </Field>
-              <Field label="Description">
-                <Textarea
-                  name="description"
-                  value={newTask.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter task description"
-                />
-              </Field>
-              <Field label="Status">
-                <NativeSelectRoot variant="filled">
-                  <NativeSelectField
-                    value={newTask.status}
-                    onChange={(e) =>
-                      setNewTask((prev) => ({
-                        ...prev,
-                        status: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="running">Running</option>
-                    <option value="completed">Completed</option>
-                  </NativeSelectField>
-                </NativeSelectRoot>
-              </Field>
-              <Field label="Deadline">
-                <Input
-                  type="date"
-                  name="dueDate"
-                  value={newTask.dueDate}
-                  onChange={handleInputChange}
-                />
-              </Field>
-            </Fieldset.Content>
-            <Button colorPalette="blue" onClick={handleAddTask}>
-              Add Task
-            </Button>
-          </Fieldset.Root>
-        </Stack>
-      </Box>
+      <Grid
+        templateColumns={{ base: "1fr", md: "1fr 2fr" }}
+        gap={6}
+        flex="1"
+        overflowY="auto"
+      >
+        <Box p={4} borderWidth={1} borderRadius="md" shadow="sm">
+          <Heading as="h2" size="lg" mb="4" textAlign="center">
+            Create New Task
+          </Heading>
+          <Stack spacing={4}>
+            <Fieldset.Root size="lg">
+              <Fieldset.Content>
+                <Field label="Title">
+                  <Input
+                    name="title"
+                    value={newTask.title}
+                    onChange={handleInputChange}
+                    placeholder="Enter task title"
+                  />
+                </Field>
+                <Field label="Description">
+                  <Textarea
+                    name="description"
+                    value={newTask.description}
+                    onChange={handleInputChange}
+                    placeholder="Enter task description"
+                  />
+                </Field>
+                <Field label="Status">
+                  <NativeSelectRoot variant="filled">
+                    <NativeSelectField
+                      value={newTask.status}
+                      onChange={(e) =>
+                        setNewTask((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="running">Running</option>
+                      <option value="completed">Completed</option>
+                    </NativeSelectField>
+                  </NativeSelectRoot>
+                </Field>
+                <Field label="Deadline">
+                  <Input
+                    type="date"
+                    name="dueDate"
+                    value={newTask.dueDate}
+                    onChange={handleInputChange}
+                  />
+                </Field>
+              </Fieldset.Content>
+              <Button
+                colorPalette={currentId ? "grey" : "blue"}
+                onClick={handleAddTask}
+                disabled={loading}
+              >
+                {currentId ? "Update Task" : "Add Task"}
+              </Button>
+            </Fieldset.Root>
+          </Stack>
+        </Box>
 
-      <Heading as="h2" size="lg" mb="6" textAlign="center">
-        Task List
-      </Heading>
-      <VStack spacing={4} align="stretch">
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <Box
-              key={task.id}
-              p={4}
-              borderWidth={1}
-              borderRadius="md"
-              shadow="sm"
-              bg={task.status === "completed" ? "green.50" : "gray.50"}
-            >
-              <HStack justify="space-between" mb={2}>
-                <Heading as="h3" size="md" color="gray.900">
-                  {task.title}
-                </Heading>
-                <Badge
-                  colorPalette={
-                    task.status === "completed" ? "green" : "yellow"
-                  }
+        <Box p={4} borderWidth={1} borderRadius="md" shadow="sm">
+          <Heading as="h2" size="lg" mb="6" textAlign="center">
+            Task List
+          </Heading>
+
+          <Box flex="1" overflowY="auto">
+            {tasks.length > 0 ? (
+              tasks.map((tsk) => (
+                <Box
+                  key={tsk._id}
+                  p={4}
+                  mb={3}
+                  borderWidth={1}
+                  borderRadius="md"
+                  shadow="sm"
+                  bg={tsk.status === "completed" ? "green.50" : "gray.50"}
                 >
-                  {task.status}
-                </Badge>
-              </HStack>
-              <Text mb={2} color="gray.800">
-                {task.description}
+                  <HStack justify="space-between" mb={2}>
+                    <Heading as="h3" size="md" color="gray.900">
+                      {tsk.title}
+                    </Heading>
+                    <Badge
+                      colorPalette={
+                        tsk.status === "completed" ? "green" : "yellow"
+                      }
+                    >
+                      {tsk.status}
+                    </Badge>
+                  </HStack>
+                  <Text mb={2} color="gray.800">
+                    {tsk.description}
+                  </Text>
+                  {user?.isAdmin && (
+                    <Text fontSize="sm" color="gray.600">
+                      Created By: {tsk.createdBy}
+                    </Text>
+                  )}
+                  <Text fontSize="sm" color="gray.600">
+                    Due Date: {tsk.dueDate}
+                  </Text>
+                  <HStack mt={4} spacing={4}>
+                    <Button
+                      colorPalette="blue"
+                      size="sm"
+                      onClick={() => handleEdit(tsk._id)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      colorPalette="red"
+                      size="sm"
+                      onClick={() => handleDelete(tsk._id)}
+                    >
+                      Delete
+                    </Button>
+                  </HStack>
+                </Box>
+              ))
+            ) : (
+              <Text textAlign="center" color="gray.500">
+                No tasks available.
               </Text>
-              {user?.isAdmin && (
-                <Text fontSize="sm" color="gray.600">
-                  Created By: {task.createdBy}
-                </Text>
-              )}
-              <Text fontSize="sm" color="gray.600">
-                Due Date: {task.dueDate.toDateString()}
-              </Text>
-              <HStack mt={4} spacing={4}>
-                <Button
-                  colorPalette="blue"
-                  size="sm"
-                  onClick={() => handleEdit(task.id)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  colorPalette="red"
-                  size="sm"
-                  onClick={() => handleDelete(task.id)}
-                >
-                  Delete
-                </Button>
-              </HStack>
-            </Box>
-          ))
-        ) : (
-          <Text textAlign="center" color="gray.500">
-            No tasks available.
-          </Text>
-        )}
-      </VStack>
-    </Box>
+            )}
+          </Box>
+        </Box>
+      </Grid>
+    </Flex>
   );
 };
 
