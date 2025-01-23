@@ -58,7 +58,7 @@ const generateTokenResponse = async (res, user) => {
 
   return res.status(200).cookie("accessToken", token, options).json({
     id: user._id,
-    username: user.username,
+    name: user.name,
     email: user.email,
     isAdmin: user.isAdmin,
     accessToken: token,

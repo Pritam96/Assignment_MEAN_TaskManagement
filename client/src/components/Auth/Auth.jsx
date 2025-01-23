@@ -2,6 +2,8 @@ import { Box, Stack, Input } from "@chakra-ui/react";
 import { useState } from "react";
 import { Field } from "../ui/field";
 import { Button } from "../ui/button";
+import { useAuth } from "../../context/AuthProvider";
+import { toaster } from "../ui/toaster";
 
 const Auth = () => {
   const [isSignup, setIsSignup] = useState(false);
@@ -12,6 +14,8 @@ const Auth = () => {
     password: "",
     confirmPassword: "",
   });
+
+  const auth = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,17 +33,47 @@ const Auth = () => {
     });
   };
 
-  const submitHandler = () => {
+  const submitHandler = async () => {
     if (isSignup && formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+      toaster.create({
+        title: "Error",
+        description: "Passwords do not match.",
+        type: "error",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
 
-    console.log("Form submitted:", {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      if (isSignup) {
+        await auth.registerAction(formData);
+        toaster.create({
+          title: "Success",
+          description: "Account created successfully!",
+          type: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        await auth.loginAction(formData);
+        toaster.create({
+          title: "Success",
+          description: "Logged in successfully!",
+          type: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      toaster.create({
+        title: "Error",
+        description: error.message,
+        type: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   return (

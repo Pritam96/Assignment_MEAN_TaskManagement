@@ -14,9 +14,10 @@ import {
 import { Field } from "../ui/field";
 import { useState } from "react";
 import { NativeSelectField, NativeSelectRoot } from "../ui/native-select";
+import { useAuth } from "../../context/AuthProvider";
 
 const Home = () => {
-  const loggedUser = { name: "User", isAdmin: true };
+  const { user, logoutAction } = useAuth();
   const [tasks, setTasks] = useState([
     {
       id: 101,
@@ -77,8 +78,7 @@ const Home = () => {
   };
 
   const handleLogout = () => {
-    console.log("User logged out");
-    alert("You have been logged out.");
+    logoutAction();
   };
 
   return (
@@ -89,7 +89,7 @@ const Home = () => {
         </Heading>
         <HStack>
           <Text fontSize="lg" color="gray.600">
-            Welcome, <strong>{loggedUser.name}</strong>
+            Welcome, <strong>{user?.name || "User"}</strong>
           </Text>
           <Button colorPalette="red" onClick={handleLogout}>
             Logout
@@ -183,7 +183,7 @@ const Home = () => {
               <Text mb={2} color="gray.800">
                 {task.description}
               </Text>
-              {loggedUser.isAdmin && (
+              {user?.isAdmin && (
                 <Text fontSize="sm" color="gray.600">
                   Created By: {task.createdBy}
                 </Text>
