@@ -45,7 +45,7 @@ const createTask = async (req, res, next) => {
 };
 
 const getTasks = async (req, res, next) => {
-  const { sortField, sortOrder = "asc" } = req.query;
+  const { sortField, sortOrder = "desc" } = req.query;
 
   try {
     if (sortField && !["dueDate", "status"].includes(sortField)) {
@@ -114,13 +114,6 @@ const updateTask = async (req, res, next) => {
     const parsedDate = new Date(dueDate);
     if (isNaN(parsedDate.getTime())) {
       return res.status(400).json({ message: "Invalid due date format" });
-    }
-
-    const currentDate = new Date();
-    if (parsedDate < currentDate) {
-      return res
-        .status(400)
-        .json({ message: "Due date must be a future date" });
     }
 
     const task = await Task.findById(_id);

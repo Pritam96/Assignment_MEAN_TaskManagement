@@ -259,7 +259,15 @@ const Home = () => {
                   borderWidth={1}
                   borderRadius="md"
                   shadow="sm"
-                  bg={tsk.status === "completed" ? "green.50" : "gray.50"}
+                  bg={
+                    tsk.status === "completed"
+                      ? "green.50"
+                      : moment().isAfter(tsk.dueDate)
+                      ? "gray.50"
+                      : tsk.status === "pending"
+                      ? "yellow.50"
+                      : "red.50"
+                  }
                 >
                   <HStack justify="space-between" mb={2}>
                     <Heading as="h3" size="md" color="gray.900">
@@ -267,7 +275,13 @@ const Home = () => {
                     </Heading>
                     <Badge
                       colorPalette={
-                        tsk.status === "completed" ? "green" : "yellow"
+                        tsk.status === "completed"
+                          ? "green"
+                          : moment().isAfter(tsk.dueDate)
+                          ? "gray"
+                          : tsk.status === "pending"
+                          ? "yellow"
+                          : "red"
                       }
                     >
                       {tsk.status}
