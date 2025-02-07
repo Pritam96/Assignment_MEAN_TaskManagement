@@ -3,8 +3,8 @@ import Task from "../models/taskModel.js";
 
 const validateObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-const checkOwnershipOrAdmin = (task, user) => {
-  return task.createdBy.toString() === user._id.toString() || user.isAdmin;
+const checkOwnershipOrAdmin = (taskId, user) => {
+  return taskId.toString() === user._id.toString() || user.isAdmin;
 };
 
 const createTask = async (req, res, next) => {
@@ -94,7 +94,7 @@ const getTask = async (req, res, next) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task.createdBy, req.user)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to access this task" });
@@ -133,7 +133,7 @@ const updateTask = async (req, res, next) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task.createdBy._id, req.user)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to update this task" });
@@ -167,7 +167,7 @@ const deleteTask = async (req, res, next) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task.createdBy, req.user)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete this task" });
