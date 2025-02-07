@@ -11,6 +11,10 @@ const createTask = async (req, res, next) => {
   const { title, description, dueDate, status } = req.body;
 
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     if (!title || !description || !dueDate) {
       return res
         .status(400)
@@ -37,7 +41,10 @@ const createTask = async (req, res, next) => {
       createdBy: req.user._id,
     });
 
-    res.status(201).json(task);
+    res.status(201).json({
+      ...task.toObject(),
+      createdBy: { _id: req.user._id, name: req.user.name },
+    });
   } catch (error) {
     console.error("Error in creating task:", error.message);
     res.status(500).json({ message: "Internal server error" });
@@ -50,6 +57,10 @@ const getTasks = async (req, res, next) => {
   try {
     if (sortField && !["dueDate", "status"].includes(sortField)) {
       return res.status(400).json({ message: "Invalid sort field" });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const query = req.user.isAdmin ? {} : { createdBy: req.user._id };
@@ -77,13 +88,13 @@ const getTask = async (req, res, next) => {
       return res.status(404).json({ message: `No task with id: ${_id}` });
     }
 
-    const task = await Task.findById(_id);
+    const task = await Task.findById(_id).populate("createdBy", "name");
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to access this task" });
@@ -107,7 +118,7 @@ const updateTask = async (req, res, next) => {
 
     if (!title || !description || !dueDate || !status) {
       return res.status(400).json({
-        message: "Title, description,due date and status are required",
+        message: "Title, description, due date, and status are required",
       });
     }
 
@@ -116,16 +127,16 @@ const updateTask = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid due date format" });
     }
 
-    const task = await Task.findById(_id);
+    const task = await Task.findById(_id).populate("createdBy", "name");
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
       return res
         .status(403)
-        .json({ message: "You are not authorized to access this task" });
+        .json({ message: "You are not authorized to update this task" });
     }
 
     task.title = title;
@@ -156,13 +167,13 @@ const deleteTask = async (req, res, next) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (!checkOwnershipOrAdmin(task, req.user)) {
+    if (!req.user || !checkOwnershipOrAdmin(task, req.user)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete this task" });
     }
 
-    await Task.findByIdAndDelete(_id);
+    await task.deleteOne();
     res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
     console.error("Error in deleting task:", error.message);
